@@ -31,7 +31,7 @@ _Discover • Sample • Curate Spanish movies with Streamlit + MongoDB Atlas_
 
 | Random Sample | Add by URL |
 |---|---|
-| ![Sample](docs/img/Sampling-Page.png) | ![Add by URL](docs/Data-Entry.png) |
+| ![Sample](docs/img/Sampling-Page.png) | ![Add by URL](docs/img/Data-Entry.png) |
 
 ---
 
