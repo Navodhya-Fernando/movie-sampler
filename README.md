@@ -27,7 +27,8 @@ _Discover • Sample • Curate Spanish movies with Streamlit + MongoDB Atlas_
 ---
 
 ## Demo
-> _Screenshots/recordings (optional). Replace the placeholders below with real images from your repo._
+
+🚀 [Live App on Streamlit Cloud](https://movie-sampler.streamlit.app)
 
 | Random Sample | Add by URL |
 |---|---|
