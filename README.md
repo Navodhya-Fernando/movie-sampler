@@ -230,7 +230,7 @@ Make sure secrets are not committed (keep using `.env`).
 ---
 
 ## License
-MIT © 2025 Your Name
+MIT © 2025 Navodhya Fernando
 
 ---
 
