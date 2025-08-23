@@ -29,9 +29,9 @@ _Discover • Sample • Curate Spanish movies with Streamlit + MongoDB Atlas_
 ## Demo
 > _Screenshots/recordings (optional). Replace the placeholders below with real images from your repo._
 
-| Delete One | Random Sample | Add by URL |
-|---|---|---|
-| ![Delete One](docs/img/delete-one.png) | ![Sample](docs/img/sample.png) | ![Add by URL](docs/img/add-url.png) |
+| Random Sample | Add by URL |
+|---|---|
+| ![Sample](docs/img/Sampling-Page.png) | ![Add by URL](docs/Data-Entry.png) |
 
 ---
 
@@ -61,9 +61,8 @@ _Discover • Sample • Curate Spanish movies with Streamlit + MongoDB Atlas_
 
 ```
 Streamlit UI (app.py)
-  ├─ Tab 1: Delete One  ──> MongoDB {Movie-List.Population}
-  ├─ Tab 2: SRS Sample  ──> MongoDB {Movie-List.Population} ($sample, delete_many)
-  └─ Tab 3: Add by URL ──> IMDb (requests + BeautifulSoup)
+  ├─ Tab 1: SRS Sample  ──> MongoDB {Movie-List.Population} ($sample, delete_many)
+  └─ Tab 2: Add by URL ──> IMDb (requests + BeautifulSoup)
                           └─ MongoDB {Movie-List.Data-Set} (upsert)
 ```
 
