@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from pymongo.errors import ServerSelectionTimeoutError, ConfigurationError, ConnectionFailure
+from bson import ObjectId
 
 # ------------------ App setup ------------------
 st.set_page_config(page_title="Spanish Movies Sampler", page_icon="🎬", layout="centered")
@@ -57,20 +58,21 @@ def ensure_connection():
 def load_df() -> pd.DataFrame:
     try:
         ensure_connection()
-        docs = list(col.find({}, {"_id": 0, "ID": 1, "Movie": 1}).sort("ID", 1))
+        docs = list(col.find({}, {"_id": 1, "Movie": 1}).sort("Movie", 1))
         df = pd.DataFrame(docs)
         if not df.empty:
-            df["ID"] = df["ID"].astype(int)
+            # Convert ObjectId to string for display
+            df["_id"] = df["_id"].astype(str)
             df["Movie"] = df["Movie"].astype(str)
         return df
     except (ServerSelectionTimeoutError, ConnectionFailure, ConfigurationError) as e:
         st.error(f"Could not reach MongoDB Atlas: {e}")
         return pd.DataFrame()
 
-def delete_one_by_id(movie_id: int) -> int:
+def delete_one_by_id(movie_id: str) -> int:
     try:
         ensure_connection()
-        return col.delete_one({"ID": int(movie_id)}).deleted_count
+        return col.delete_one({"_id": ObjectId(movie_id)}).deleted_count
     except Exception as e:
         st.error(f"Delete failed: {e}")
         return 0
@@ -78,8 +80,15 @@ def delete_one_by_id(movie_id: int) -> int:
 def sample_docs(k: int):
     try:
         ensure_connection()
-        pipeline = [{"$sample": {"size": int(k)}}, {"$project": {"_id": 0, "ID": 1, "Movie": 1}}]
-        return list(col.aggregate(pipeline))
+        pipeline = [
+            {"$sample": {"size": int(k)}}, 
+            {"$project": {"_id": 1, "Movie": 1}}
+        ]
+        docs = list(col.aggregate(pipeline))
+        # Convert ObjectId to string for easier handling
+        for doc in docs:
+            doc["_id"] = str(doc["_id"])
+        return docs
     except Exception as e:
         st.error(f"Sampling failed: {e}")
         return []
@@ -87,7 +96,9 @@ def sample_docs(k: int):
 def delete_many_by_ids(ids):
     try:
         ensure_connection()
-        return col.delete_many({"ID": {"$in": [int(x) for x in ids]}}).deleted_count
+        # Convert string IDs back to ObjectId
+        object_ids = [ObjectId(id_str) for id_str in ids]
+        return col.delete_many({"_id": {"$in": object_ids}}).deleted_count
     except Exception as e:
         st.error(f"Bulk delete failed: {e}")
         return 0
@@ -208,7 +219,7 @@ if st.button("🔌 Test Atlas connection"):
 
 tab1, tab2 = st.tabs(["Draw sample at random", "Add by URL → Data-Set"])
 
-# ---- Tab 2: Draw sample ----
+# ---- Tab 1: Draw sample ----
 with tab1:
     st.subheader("Simple Random Sample (preview/download, optional delete-many)")
     df_all = load_df()
@@ -223,11 +234,10 @@ with tab1:
                 sdocs = sample_docs(k)
                 sdf = pd.DataFrame(sdocs)
                 if not sdf.empty:
-                    sdf["ID"] = sdf["ID"].astype(int)
-                    st.dataframe(sdf.sort_values("ID")[["ID", "Movie"]], use_container_width=True, hide_index=True)
+                    st.dataframe(sdf[["_id", "Movie"]], use_container_width=True, hide_index=True)
                     st.download_button(
                         "⬇️ Download sample as CSV",
-                        data=sdf.sort_values("ID")[["ID", "Movie"]].to_csv(index=False).encode("utf-8"),
+                        data=sdf[["_id", "Movie"]].to_csv(index=False).encode("utf-8"),
                         file_name=f"sample_{k}.csv",
                         mime="text/csv",
                     )
@@ -239,13 +249,13 @@ with tab1:
                 really = st.checkbox("I understand and want to proceed.")
                 if st.button(f"❌ Draw and DELETE {k} at random", disabled=not really):
                     sdocs = sample_docs(k)
-                    ids_to_delete = [d["ID"] for d in sdocs]
+                    ids_to_delete = [d["_id"] for d in sdocs]
                     deleted = delete_many_by_ids(ids_to_delete)
                     st.success(f"Deleted {deleted} movies.")
                     st.cache_data.clear()
                     st.rerun()
 
-# ---- Tab 3: Add by URL -> Data-Set (fetch ONLY year/rating/votes/runtime; manual for rest) ----
+# ---- Tab 2: Add by URL -> Data-Set (fetch ONLY year/rating/votes/runtime; manual for rest) ----
 with tab2:
     st.subheader("Add a movie by URL → stored in collection: Data-Set")
     url = st.text_input(
